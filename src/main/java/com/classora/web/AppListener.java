@@ -4,9 +4,9 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/** Starts the application when the web app is deployed and stops it on shutdown. */
 @WebListener
 public class AppListener implements ServletContextListener {
 
@@ -15,9 +15,15 @@ public class AppListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent event) {
-        Application application = Application.fromEnvironment();
-        event.getServletContext().setAttribute(ATTRIBUTE, application);
-        LOG.info("Classora started");
+        try {
+            Application application = Application.fromEnvironment();
+            event.getServletContext().setAttribute(ATTRIBUTE, application);
+            LOG.info("Classora started");
+        } catch (RuntimeException | Error e) {
+            LOG.log(Level.SEVERE, "CLASSORA STARTUP FAILURE", e);
+            e.printStackTrace(System.err);
+            throw e;
+        }
     }
 
     @Override
