@@ -4,6 +4,8 @@ import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
 import jakarta.servlet.annotation.WebListener;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,8 +22,16 @@ public class AppListener implements ServletContextListener {
             event.getServletContext().setAttribute(ATTRIBUTE, application);
             LOG.info("Classora started");
         } catch (RuntimeException | Error e) {
-            LOG.log(Level.SEVERE, "CLASSORA STARTUP FAILURE", e);
-            e.printStackTrace(System.err);
+            StringWriter writer = new StringWriter();
+            e.printStackTrace(new PrintWriter(writer));
+
+            String details = writer.toString()
+                    .replace("\r", "")
+                    .replace("\n", " | ");
+
+            LOG.log(Level.SEVERE, "CLASSORA STARTUP FAILURE DETAILS: " + details);
+            event.getServletContext().log("CLASSORA STARTUP FAILURE DETAILS: " + details, e);
+
             throw e;
         }
     }
