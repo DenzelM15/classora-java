@@ -30,27 +30,47 @@ public class Database implements AutoCloseable {
     }
 
     public static Database connect(DatabaseUrl rawUrl) {
-        DatabaseUrl url = rawUrl.withSslDefault();
-        Map<String, Object> props = new HashMap<>();
-        props.put("jakarta.persistence.jdbc.url", url.jdbcUrl());
-        if (url.username() != null) {
-            props.put("jakarta.persistence.jdbc.user", url.username());
-        }
-        if (url.password() != null) {
-            props.put("jakarta.persistence.jdbc.password", url.password());
-        }
-        props.put("hibernate.connection.provider_class",
-                "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
-        props.put("hibernate.hikari.maximumPoolSize", "5");
-        props.put("hibernate.hikari.minimumIdle", "1");
-        // Timestamps are stored as UTC wall-clock time.
-        props.put("hibernate.jdbc.time_zone", "UTC");
-        props.put("hibernate.show_sql", "false");
+    DatabaseUrl url = rawUrl.withSslDefault();
 
-        Database db = new Database(Persistence.createEntityManagerFactory("classora", props));
-        db.runSchemaScript();
-        return db;
+    Map<String, Object> props = new HashMap<>();
+
+    props.put("jakarta.persistence.jdbc.url", url.jdbcUrl());
+
+    if (url.username() != null) {
+        props.put("jakarta.persistence.jdbc.user", url.username());
     }
+
+    if (url.password() != null) {
+        props.put("jakarta.persistence.jdbc.password", url.password());
+    }
+
+    props.put("hibernate.connection.provider_class",
+            "org.hibernate.hikaricp.internal.HikariCPConnectionProvider");
+
+    // Select the JDBC driver based on the database URL.
+    if (url.jdbcUrl().startsWith("jdbc:postgresql:")) {
+        props.put("hibernate.hikari.driverClassName",
+                "org.postgresql.Driver");
+    } else if (url.jdbcUrl().startsWith("jdbc:h2:")) {
+        props.put("hibernate.hikari.driverClassName",
+                "org.h2.Driver");
+    }
+
+    props.put("hibernate.hikari.maximumPoolSize", "5");
+    props.put("hibernate.hikari.minimumIdle", "1");
+
+    // Timestamps are stored as UTC wall-clock time.
+    props.put("hibernate.jdbc.time_zone", "UTC");
+    props.put("hibernate.show_sql", "false");
+
+    Database db = new Database(
+            Persistence.createEntityManagerFactory("classora", props)
+    );
+
+    db.runSchemaScript();
+
+    return db;
+}
 
     /** Runs work in a transaction and returns its result. Rolls back on any exception. */
     public <T> T inTransaction(Function<EntityManager, T> work) {
