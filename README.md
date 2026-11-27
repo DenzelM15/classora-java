@@ -66,7 +66,7 @@ is safe to run on the existing production database: it only adds what is missing
 ### On Android (Termux)
 
 ```bash
-pkg install openjdk-17 maven postgresql git
+pkg install openjdk-21 maven postgresql git
 
 mkdir -p $PREFIX/var/lib/postgresql
 initdb $PREFIX/var/lib/postgresql
@@ -153,13 +153,13 @@ Behaviour is the same except for these deliberate fixes:
    generic 500 message and are logged on the server.
 6. **Password length** is limited to 72 bytes (a BCrypt limit that Node truncated silently).
 7. **Quiz titles** that are blank are rejected.
+8. **Timezone handling.** Quiz scheduling and date handling have been corrected
+   to account for browser-local time and UTC conversion. Quiz dates and times
+   are now interpreted and displayed consistently, avoiding unintended
+   timezone shifts.
 
 ## Known limitations
 
-- **Quiz dates have no time zone.** The browser's date picker sends
-  `2026-11-22T10:00` with no zone, and both versions store it as UTC. Teachers
-  outside UTC will see times shifted. Fix on the front end by sending
-  `new Date(value).toISOString()`; the Java side already accepts both formats.
 - **Role changes and deletions take effect when the token expires** (1 hour),
   because the role is read from the token.
 - Tokens are kept in `localStorage` by the front end.
